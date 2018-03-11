@@ -1,2 +1,18 @@
 # call-tracker-frontend
-Frontend of the "Call Tracker"
+Mobile app, "Call Tracker"
+
+### setup
+install xcode, homebrew
+
+```
+brew install node
+brew install watchman
+
+cd call-tacker-frontend && npm i
+```
+
+
+### run
+```
+react-native run-ios
+```
