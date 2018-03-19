@@ -1,9 +1,3 @@
-/**
- * Sample React Native App
- * https://github.com/facebook/react-native
- * @flow
- */
-
 import React, { Component } from 'react';
 import {
   Platform,
@@ -13,18 +7,10 @@ import {
   View
 } from 'react-native';
 
-// import Sound from 'react-native-sound';
 import { AudioRecorder, AudioUtils } from 'react-native-audio';
 
+import { record, play, dir } from './audio';
 
-let audioPath = AudioUtils.DocumentDirectoryPath + '/test.aac';
-
-AudioRecorder.prepareRecordingAtPath(audioPath, {
-  SampleRate: 22050,
-  Channels: 1,
-  AudioQuality: "Low",
-  AudioEncoding: "aac"
-});
 
 const instructions = Platform.select({
   ios: 'Press Cmd+R to reload,\n' +
@@ -35,41 +21,42 @@ const instructions = Platform.select({
 
 type Props = {};
 
-const wait = time => new Promise(res => setTimeout(res, time));
-
 export default class App extends Component<Props> {
   state = {
     recorded: false,
-    audioPath: AudioUtils.DocumentDirectoryPath + '/test.aac',
+    audioPath: dir + '/test.aac',
   };
 
-  onRecord = async () => {
-    try {
-      await AudioRecorder.startRecording();
 
-      await AudioRecorder.prepareRecordingAtPath(this.state.audioPath, {
-        SampleRate: 22050,
-        Channels: 1,
-        AudioQuality: "Low",
-        AudioEncoding: "aac",
-        AudioEncodingBitRate: 32000
-      });
-
-      await wait(3000);
-      await AudioRecorder.stopRecording();
-      this.setState({
-        recorded: true,
-      });
-      console.log('recorded');
-    } catch (error) {
-      console.log('record error', error);
-    }
+  onRecord3 = async () => {
+    await record(3000, this.state.audioPath);
+    this.setState({
+      recorded: true,
+    });
   }
+
+  onRecord10 = async () => {
+    await record(10000, this.state.audioPath);
+    this.setState({
+      recorded: true,
+    });
+  }
+
+  onRecord30 = async () => {
+    await record(30000, this.state.audioPath);
+    this.setState({
+      recorded: true,
+    });
+  }
+
+  onPlay = play.bind(null, this.state.audioPath)
 
   upload = () => {
     const RNFS = require('react-native-fs');
 
-    const uploadUrl = 'https://requestb.in/1fn8bnd1';
+    const uploadUrl = 'http://localhost:4000/';
+
+    fetch('http://localhost:4000/fuck').then(console.log.bind(console));
 
     const files = [
       {
@@ -86,7 +73,7 @@ export default class App extends Component<Props> {
 
     const uploadProgress = ({ totalBytesSent, totalBytesExpectedToSend }) => {
       var percentage = Math.floor((totalBytesSent/totalBytesExpectedToSend) * 100);
-      console.log('Upload: ' + percentage + '%');
+      console.log('Upload: ' + percentage + '%',totalBytesSent, totalBytesExpectedToSend);
     };
 
     // upload files
@@ -114,40 +101,40 @@ export default class App extends Component<Props> {
       })
   }
 
-  // onPlay = () => {
-  //   setTimeout(() => {
-  //     const sound = new Sound(this.state.audioPath, '', (error) => {
-  //       if (error) {
-  //         console.log('failed to load the sound', error);
-  //       }
-  //     });
-  //
-  //     setTimeout(() => {
-  //       sound.play((success) => {
-  //         if (success) {
-  //           console.log('successfully finished playing');
-  //         } else {
-  //           console.log('playback failed due to audio decoding errors');
-  //         }
-  //       });
-  //     }, 100);
-  //   }, 100);
-  // }
+
 
   render() {
     const { recorded } = this.state;
     return (
       <View style={styles.container}>
         <Button
-          onPress={this.onRecord}
+          onPress={this.onRecord3}
+          title="Record 3 sec"
+          color="#fac73f"
+          accessibilityLabel="record 3 second"
+        />
+        <Button
+          onPress={this.onRecord10}
           title="Record 10 sec"
-          color="#841584"
+          color="#fac73f"
           accessibilityLabel="record 10 second"
         />
+        <Button
+          onPress={this.onRecord30}
+          title="Record 30 sec"
+          color="#fac73f"
+          accessibilityLabel="record 30 second"
+        />
+        {recorded && <Button
+          onPress={this.onPlay}
+          title="Play"
+          color="#b4bd68"
+          accessibilityLabel="play"
+        />}
         {recorded && <Button
           onPress={this.upload}
           title="Upload"
-          color="#856515"
+          color="#286262"
           accessibilityLabel="upload"
         />}
       </View>
