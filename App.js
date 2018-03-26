@@ -7,9 +7,10 @@ import {
   View
 } from 'react-native';
 
-import { AudioRecorder, AudioUtils } from 'react-native-audio';
-
 import { record, play, dir } from './audio';
+
+
+import { VictoryBar, VictoryChart, VictoryTheme } from "victory-native";
 
 
 const instructions = Platform.select({
@@ -49,14 +50,38 @@ export default class App extends Component<Props> {
     });
   }
 
-  onPlay = play.bind(null, this.state.audioPath)
+  onPlay = () => {
+    let currentTimeInterval
+
+    this.setState({
+      playing: true,
+    });
+
+    const sound = play(this.state.audioPath, () => {
+      this.setState({
+        plaing: false,
+      });
+      clearInterval(currentTimeInterval);
+    });
+
+    setTimeout(() => {
+      this.setState({
+        duration: sound.getDuration(),
+        sound,
+      });
+    }, 100);
+
+    currentTimeInterval = setInterval(() => {
+      sound.getCurrentTime((currentTime) => this.setState({
+        currentTime,
+      }));
+    }, 200);
+  }
 
   upload = () => {
     const RNFS = require('react-native-fs');
 
     const uploadUrl = 'http://localhost:4000/';
-
-    fetch('http://localhost:4000/fuck').then(console.log.bind(console));
 
     const files = [
       {
@@ -104,9 +129,38 @@ export default class App extends Component<Props> {
 
 
   render() {
-    const { recorded } = this.state;
+    const { recorded, duration = 3 , currentTime = 1, sound } = this.state;
+
+    const data = [];
+    for (const i = 0; i <= Math.floor(duration)*10; i++) {
+      data.push({x: i, y: Math.sin(i)});
+    }
+
+    const current = currentTime < duration && data[Math.floor(currentTime)] && [ data[Math.floor(currentTime*10)] ] || [];
+
     return (
       <View style={styles.container}>
+
+        <VictoryChart width={350} theme={VictoryTheme.material}>
+          <VictoryBar
+            onClick={(...args) => console.log('click', ...args) }
+            // events={[{ onClick: (...args) => console.log('click', ...args) }]}
+            events={[{
+              target: "data",
+              eventHandlers: {
+                onPress: (evt, context, index) => {
+                  sound.setCurrentTime(index / 10);
+                },
+              }
+            }]}
+            barRatio={0.9}
+            data={data}
+            x="x"
+            y="y"
+          />
+          <VictoryBar data={current} x="x" y="y" style={{ data: { fill: "red"} }}/>
+        </VictoryChart>
+
         <Button
           onPress={this.onRecord3}
           title="Record 3 sec"

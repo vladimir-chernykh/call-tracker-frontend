@@ -17,7 +17,7 @@ export const record = async (duration, path) => {
 
     await AudioRecorder.startRecording();
 
-    await wait(3000);
+    await wait(duration);
     await AudioRecorder.stopRecording();
     console.log('recorded');
   } catch (error) {
@@ -25,22 +25,22 @@ export const record = async (duration, path) => {
   }
 };
 
-export const play = (path) => {
+export const play = (path, onEnd) => {
+  const sound = new Sound(path, '', (error) => {
+    if (error) {
+      console.log('failed to load the sound', error);
+    }
+  });
+
   setTimeout(() => {
-    const sound = new Sound(path, '', (error) => {
-      if (error) {
-        console.log('failed to load the sound', error);
+    sound.play((success) => {
+      onEnd && onEnd();
+      if (success) {
+        console.log('successfully finished playing');
+      } else {
+        console.log('playback failed due to audio decoding errors');
       }
     });
-
-    setTimeout(() => {
-      sound.play((success) => {
-        if (success) {
-          console.log('successfully finished playing');
-        } else {
-          console.log('playback failed due to audio decoding errors');
-        }
-      });
-    }, 100);
   }, 100);
+  return sound;
 };
