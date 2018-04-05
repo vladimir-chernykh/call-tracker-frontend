@@ -10,9 +10,6 @@ import {
 import { recordStart, recordStop, play, dir } from './audio';
 
 
-import { VictoryBar, VictoryChart, VictoryTheme } from "victory-native";
-
-
 const instructions = Platform.select({
   ios: 'Press Cmd+R to reload,\n' +
     'Cmd+D or shake for dev menu',
@@ -80,12 +77,6 @@ export default class App extends Component<Props> {
     const RNFS = require('react-native-fs');
 
     const uploadUrl = 'http://ctrack.me/api/v1/phones/+79160000000';
-    fetch('http://httpbin.org/').then(console.log.bind(console, 's'), console.log.bind(console, 'e'));
-    fetch('https://httpbin.org/').then(console.log.bind(console, 's'), console.log.bind(console, 'e'));
-    // const uploadUrl = 'localhost/api/v1/phones/+79160000000';
-    // const uploadUrl = 'http://ctrack.me/';
-    // const uploadUrl = 'http://localhost:4000';
-    // const uploadUrl = 'https://httpbin.org/post';
 
     const files = [
       {
@@ -93,7 +84,6 @@ export default class App extends Component<Props> {
         filename: 'test.aac',
         filepath: this.state.audioPath,
         filetype: 'application/octet-stream',
-        // filetype: '	audio/aac'
       }
     ];
 
@@ -157,33 +147,10 @@ export default class App extends Component<Props> {
       data.push({x: i, y: Math.sin(i)});
     }
 
-    // const current = (currentTime && (currentTime < duration)) ? [ data[Math.floor(currentTime*10)] ] : [];
-
     return (
       <View style={styles.container}>
         { Number.isInteger(id) && <Text> id: {id} </Text> }
         { result && <Text> result: {JSON.stringify(result, null, 2)}</Text> }
-        {/* { duration &&
-          <VictoryChart width={350} theme={VictoryTheme.material}>
-            <VictoryBar
-              onClick={(...args) => console.log('click', ...args) }
-              // events={[{ onClick: (...args) => console.log('click', ...args) }]}
-              events={[{
-                target: "data",
-                eventHandlers: {
-                  onPress: (evt, context, index) => {
-                    sound.setCurrentTime(index / 10);
-                  },
-                }
-              }]}
-              barRatio={0.9}
-              data={data}
-              x="x"
-              y="y"
-            />
-            <VictoryBar data={current} x="x" y="y" style={{ data: { fill: "red"} }}/>
-          </VictoryChart>
-        } */}
         { Number.isInteger(id) && <Button
           onPress={this.onResultPull}
           title="Pull Result"
