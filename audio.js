@@ -5,7 +5,7 @@ const wait = time => new Promise(res => setTimeout(res, time));
 
 export const dir = AudioUtils.DocumentDirectoryPath;
 
-export const record = async (duration, path) => {
+export const recordStart = async (path) => {
   try {
     await AudioRecorder.prepareRecordingAtPath(path, {
       SampleRate: 22050,
@@ -16,8 +16,13 @@ export const record = async (duration, path) => {
     });
 
     await AudioRecorder.startRecording();
+  } catch (error) {
+    console.log('record error', error);
+  }
+};
 
-    await wait(duration);
+export const recordStop = async () => {
+  try {
     await AudioRecorder.stopRecording();
     console.log('recorded');
   } catch (error) {

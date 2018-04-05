@@ -7,7 +7,7 @@ import {
   View
 } from 'react-native';
 
-import { record, play, dir } from './audio';
+import { recordStart, recordStop, play, dir } from './audio';
 
 
 import { VictoryBar, VictoryChart, VictoryTheme } from "victory-native";
@@ -22,36 +22,34 @@ const instructions = Platform.select({
 
 type Props = {};
 
+const EMPTY = null;
+const RECORDING = 'RECORDING';
+const RECORDED = 'RECORDED';
+
 export default class App extends Component<Props> {
   state = {
-    recorded: false,
+    state: EMPTY,
     audioPath: dir + '/test.aac',
   };
 
 
-  onRecord3 = async () => {
-    await record(3000, this.state.audioPath);
+  onRecordStart = async () => {
+    await recordStart(this.state.audioPath);
     this.setState({
-      recorded: true,
+      state: RECORDING,
+      result: null,
     });
   }
 
-  onRecord10 = async () => {
-    await record(10000, this.state.audioPath);
+  onRecordStop = async () => {
+    await recordStop();
     this.setState({
-      recorded: true,
-    });
-  }
-
-  onRecord30 = async () => {
-    await record(30000, this.state.audioPath);
-    this.setState({
-      recorded: true,
+      state: RECORDED,
     });
   }
 
   onPlay = () => {
-    let currentTimeInterval
+    let currentTimeInterval;
 
     this.setState({
       playing: true,
@@ -81,14 +79,21 @@ export default class App extends Component<Props> {
   upload = () => {
     const RNFS = require('react-native-fs');
 
-    const uploadUrl = 'http://localhost:4000/';
+    const uploadUrl = 'http://ctrack.me/api/v1/phones/+79160000000';
+    fetch('http://httpbin.org/').then(console.log.bind(console, 's'), console.log.bind(console, 'e'));
+    fetch('https://httpbin.org/').then(console.log.bind(console, 's'), console.log.bind(console, 'e'));
+    // const uploadUrl = 'localhost/api/v1/phones/+79160000000';
+    // const uploadUrl = 'http://ctrack.me/';
+    // const uploadUrl = 'http://localhost:4000';
+    // const uploadUrl = 'https://httpbin.org/post';
 
     const files = [
       {
-        name: 'test',
+        name: 'audio',
         filename: 'test.aac',
         filepath: this.state.audioPath,
-        filetype: '	audio/aac'
+        filetype: 'application/octet-stream',
+        // filetype: '	audio/aac'
       }
     ];
 
@@ -107,13 +112,17 @@ export default class App extends Component<Props> {
       files: files,
       method: 'POST',
       headers: {
-        'Accept': 'application/json',
+        'Accept': '*/*',
       },
       begin: uploadBegin,
       progress: uploadProgress
     }).promise.then((response) => {
-        if (response.statusCode == 200) {
-          console.log('file uploaded'); // response.statusCode, response.headers, response.body
+        console.log(response);
+        if (response.statusCode == 201) {
+          const { id } = JSON.parse(response.body);
+          this.setState({ id });
+          console.log('file uploaded', response); // response.statusCode, response.headers, response.body
+          // TODO set identifier
         } else {
           console.log('Server error');
         }
@@ -126,66 +135,85 @@ export default class App extends Component<Props> {
       })
   }
 
+  onResultPull = async () => {
+    const { id } = this.state;
+    console.log(`http://ctrack.me/api/v1/calls/${id}`);
+    const resp = await fetch(`http://ctrack.me/api/v1/calls/${id}`);
+    console.log(resp);
+    const result = await resp.json();
+    this.setState({
+      result,
+    });
+  }
+
 
 
   render() {
-    const { recorded, duration = 3 , currentTime = 1, sound } = this.state;
+    let { state, duration, currentTime, sound, result, id } = this.state;
+    currentTime = Math.min(duration, currentTime);
 
     const data = [];
     for (const i = 0; i <= Math.floor(duration)*10; i++) {
       data.push({x: i, y: Math.sin(i)});
     }
 
-    const current = currentTime < duration && data[Math.floor(currentTime)] && [ data[Math.floor(currentTime*10)] ] || [];
+    // const current = (currentTime && (currentTime < duration)) ? [ data[Math.floor(currentTime*10)] ] : [];
 
     return (
       <View style={styles.container}>
-
-        <VictoryChart width={350} theme={VictoryTheme.material}>
-          <VictoryBar
-            onClick={(...args) => console.log('click', ...args) }
-            // events={[{ onClick: (...args) => console.log('click', ...args) }]}
-            events={[{
-              target: "data",
-              eventHandlers: {
-                onPress: (evt, context, index) => {
-                  sound.setCurrentTime(index / 10);
-                },
-              }
-            }]}
-            barRatio={0.9}
-            data={data}
-            x="x"
-            y="y"
+        { Number.isInteger(id) && <Text> id: {id} </Text> }
+        { result && <Text> result: {JSON.stringify(result, null, 2)}</Text> }
+        {/* { duration &&
+          <VictoryChart width={350} theme={VictoryTheme.material}>
+            <VictoryBar
+              onClick={(...args) => console.log('click', ...args) }
+              // events={[{ onClick: (...args) => console.log('click', ...args) }]}
+              events={[{
+                target: "data",
+                eventHandlers: {
+                  onPress: (evt, context, index) => {
+                    sound.setCurrentTime(index / 10);
+                  },
+                }
+              }]}
+              barRatio={0.9}
+              data={data}
+              x="x"
+              y="y"
+            />
+            <VictoryBar data={current} x="x" y="y" style={{ data: { fill: "red"} }}/>
+          </VictoryChart>
+        } */}
+        { Number.isInteger(id) && <Button
+          onPress={this.onResultPull}
+          title="Pull Result"
+          color="#b4bd68"
+          accessibilityLabel="pull result"
+        />}
+        { state !== RECORDING &&
+          <Button
+            onPress={this.onRecordStart}
+            title="Start recording"
+            color="#fac73f"
+            accessibilityLabel="record 3 second"
           />
-          <VictoryBar data={current} x="x" y="y" style={{ data: { fill: "red"} }}/>
-        </VictoryChart>
-
-        <Button
-          onPress={this.onRecord3}
-          title="Record 3 sec"
-          color="#fac73f"
-          accessibilityLabel="record 3 second"
-        />
-        <Button
-          onPress={this.onRecord10}
-          title="Record 10 sec"
-          color="#fac73f"
-          accessibilityLabel="record 10 second"
-        />
-        <Button
-          onPress={this.onRecord30}
-          title="Record 30 sec"
-          color="#fac73f"
-          accessibilityLabel="record 30 second"
-        />
-        {recorded && <Button
+        }
+        { state === RECORDING &&
+          <Button
+            style={styles.stopRecording}
+            onPress={this.onRecordStop}
+            title="Stop recording"
+            color="#fac73f"
+            accessibilityLabel="record 10 second"
+          />
+        }
+        {state === RECORDED && <Button
           onPress={this.onPlay}
           title="Play"
           color="#b4bd68"
           accessibilityLabel="play"
         />}
-        {recorded && <Button
+        {state === RECORDED && <Button
           onPress={this.upload}
           title="Upload"
           color="#286262"
@@ -203,8 +231,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: '#F5FCFF',
   },
-  welcome: {
-    fontSize: 20,
+  stopRecording: {
+    padding: 30,
+    borderRadius: 100,
+    backgroundColor: 'red',
     textAlign: 'center',
     margin: 10,
   },
