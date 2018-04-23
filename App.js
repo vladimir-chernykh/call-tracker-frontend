@@ -4,8 +4,11 @@ import {
   StyleSheet,
   Text,
   Button,
-  View
+  View,
+  ScrollView,
 } from 'react-native';
+
+import CallDetectorManager from 'react-native-call-detection'
 
 import { recordStart, recordStop, play, dir } from './audio';
 
@@ -171,7 +174,7 @@ export default class App extends Component<Props> {
     }
 
     return (
-      <View style={styles.container}>
+      <ScrollView contentContainerStyle={styles.container}>
         { Number.isInteger(id) && <Text> id: {id} </Text> }
         { result && <Text> result: {JSON.stringify(result, null, 2)}</Text> }
         { Number.isInteger(id) && <Button
@@ -209,14 +212,13 @@ export default class App extends Component<Props> {
           color="#286262"
           accessibilityLabel="upload"
         />}
-      </View>
+      </ScrollView>
     );
   }
 }
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: '#F5FCFF',
