@@ -105,6 +105,47 @@ export default class App extends Component<Props> {
     audioPath: dir + '/test.aac',
   };
 
+  componentDidMount() {
+    this.initCallDetector();
+  }
+
+  initCallDetector() {
+    this.callDetector = new CallDetectorManager(
+      (event, number)=> {
+      console.log(event, number);
+      number && this.setState({
+        phoneNumber: number,
+        phoneEvent: event,
+      });
+      // For iOS event will be either "Connected",
+      // "Disconnected","Dialing" and "Incoming"
+
+      // For Android event will be either "Offhook",
+      // "Disconnected", "Incoming" or "Missed"
+      if (event === 'Incoming') {
+        // Do something call got incoming
+      }
+      else if (event === 'Offhook') {
+        //Device call state: Off-hook.
+        // At least one call exists that is dialing,
+        // active, or on hold,
+        // and no calls are ringing or waiting.
+        // This clause will only be executed for Android
+      }
+      else if (event === 'Missed') {
+      	// Do something call got missed
+      	// This clause will only be executed for Android
+      }
+    },
+    true,
+    () => {},
+    {
+      title: 'Phone State Permission',
+      message: 'This app needs access to your phone state in order to track your emotions.'
+    }
+  );
+  }
+
 
   onRecordStart = async () => {
     await recordStart(this.state.audioPath);
@@ -165,7 +206,7 @@ export default class App extends Component<Props> {
 
 
   render() {
-    let { state, duration, currentTime, sound, result, id } = this.state;
+    let { state, duration, currentTime, sound, result, id, phoneNumber, phoneEvent } = this.state;
     currentTime = Math.min(duration, currentTime);
 
     const data = [];
@@ -177,6 +218,8 @@ export default class App extends Component<Props> {
       <ScrollView contentContainerStyle={styles.container}>
         { Number.isInteger(id) && <Text> id: {id} </Text> }
         { result && <Text> result: {JSON.stringify(result, null, 2)}</Text> }
+        { phoneNumber && <Text> phoneNumber: {phoneNumber}</Text> }
+        { phoneEvent && <Text> phoneEvent: {phoneEvent}</Text> }
         { Number.isInteger(id) && <Button
           onPress={this.onResultPull}
           title="Pull Result"
