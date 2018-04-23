@@ -23,6 +23,79 @@ const EMPTY = null;
 const RECORDING = 'RECORDING';
 const RECORDED = 'RECORDED';
 
+
+const upload = Platform.select({
+  ios: function () {
+    const RNFS = require('react-native-fs');
+
+    const uploadUrl = 'http://ctrack.me/api/v1/phones/+79160000000';
+
+    const files = [
+      {
+        name: 'audio',
+        filename: 'test.aac',
+        filepath: this.state.audioPath,
+        filetype: 'application/octet-stream',
+      }
+    ];
+
+    const uploadBegin = ({ jobId }) => {
+      console.log('Upload has begun, jobId: ' + jobId);
+    };
+
+    const uploadProgress = ({ totalBytesSent, totalBytesExpectedToSend }) => {
+      var percentage = Math.floor((totalBytesSent/totalBytesExpectedToSend) * 100);
+      console.log('Upload: ' + percentage + '%',totalBytesSent, totalBytesExpectedToSend);
+    };
+
+    // upload files
+    RNFS.uploadFiles({
+      toUrl: uploadUrl,
+      files: files,
+      method: 'POST',
+      headers: {
+        'Accept': '*/*',
+      },
+      begin: uploadBegin,
+      progress: uploadProgress
+    }).promise.then((response) => {
+        console.log(response);
+        if (response.statusCode == 201) {
+          const { id } = JSON.parse(response.body);
+          this.setState({ id });
+          console.log('file uploaded', response); // response.statusCode, response.headers, response.body
+          // TODO set identifier
+        } else {
+          console.log('Server error');
+        }
+      })
+      .catch((err) => {
+        if(err.description === 'cancelled') {
+          // cancelled by user
+        }
+        console.log(err);
+      })
+  },
+  android: function () {
+    const file = {
+      uri: `file://${this.state.audioPath}`,
+      name: 'test.aac',
+      type: 'application/octet-stream',
+    }
+
+    const body = new FormData()
+    body.append('audio', file);
+
+    const uploadUrl = 'http://ctrack.me/api/v1/phones/+79160000000';
+
+    fetch(uploadUrl, {
+      method: 'POST',
+      body
+    }).then(resp => resp.json()).then(({ id }) => this.setState({ id }));
+  },
+});
+
+
 export default class App extends Component<Props> {
   state = {
     state: EMPTY,
@@ -73,57 +146,7 @@ export default class App extends Component<Props> {
     }, 200);
   }
 
-  upload = () => {
-    const RNFS = require('react-native-fs');
-
-    const uploadUrl = 'http://ctrack.me/api/v1/phones/+79160000000';
-
-    const files = [
-      {
-        name: 'audio',
-        filename: 'test.aac',
-        filepath: this.state.audioPath,
-        filetype: 'application/octet-stream',
-      }
-    ];
-
-    const uploadBegin = ({ jobId }) => {
-      console.log('Upload has begun, jobId: ' + jobId);
-    };
-
-    const uploadProgress = ({ totalBytesSent, totalBytesExpectedToSend }) => {
-      var percentage = Math.floor((totalBytesSent/totalBytesExpectedToSend) * 100);
-      console.log('Upload: ' + percentage + '%',totalBytesSent, totalBytesExpectedToSend);
-    };
-
-    // upload files
-    RNFS.uploadFiles({
-      toUrl: uploadUrl,
-      files: files,
-      method: 'POST',
-      headers: {
-        'Accept': '*/*',
-      },
-      begin: uploadBegin,
-      progress: uploadProgress
-    }).promise.then((response) => {
-        console.log(response);
-        if (response.statusCode == 201) {
-          const { id } = JSON.parse(response.body);
-          this.setState({ id });
-          console.log('file uploaded', response); // response.statusCode, response.headers, response.body
-          // TODO set identifier
-        } else {
-          console.log('Server error');
-        }
-      })
-      .catch((err) => {
-        if(err.description === 'cancelled') {
-          // cancelled by user
-        }
-        console.log(err);
-      })
-  }
+  upload = upload.bind(this);
 
   onResultPull = async () => {
     const { id } = this.state;

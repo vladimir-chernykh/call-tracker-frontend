@@ -3,6 +3,7 @@ package com.etracker;
 import android.app.Application;
 
 import com.facebook.react.ReactApplication;
+import com.pritesh.calldetection.CallDetectionManager;
 import com.horcrux.svg.SvgPackage;
 import com.rnfs.RNFSPackage;
 import com.zmxv.RNSound.RNSoundPackage;
@@ -27,6 +28,7 @@ public class MainApplication extends Application implements ReactApplication {
     protected List<ReactPackage> getPackages() {
       return Arrays.<ReactPackage>asList(
           new MainReactPackage(),
+            new CallDetectionManager(MainApplication.this),
             new SvgPackage(),
             new RNFSPackage(),
             new RNSoundPackage(),

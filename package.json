@@ -10,6 +10,7 @@
     "react": "^16.3.1",
     "react-native": "^0.55.3",
     "react-native-audio": "^4.0.0",
+    "react-native-call-detection": "^1.6.3",
     "react-native-fs": "^2.9.11",
     "react-native-sound": "^0.10.9",
     "react-native-svg": "^6.3.1",
